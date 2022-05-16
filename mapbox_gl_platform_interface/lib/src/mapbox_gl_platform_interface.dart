@@ -45,6 +45,8 @@ abstract class MapboxGlPlatform {
 
   final onUserLocationUpdatedPlatform = ArgumentCallbacks<UserLocation>();
 
+  final resizeMapPlatform = ArgumentCallbacks<void>();
+
   Future<void> initPlatform(int id);
   Widget buildView(
       Map<String, dynamic> creationParams,
@@ -158,6 +160,8 @@ abstract class MapboxGlPlatform {
 
   Future<void> addSource(String sourceId, SourceProperties properties);
 
+  void resizeMap();
+
   @mustCallSuper
   void dispose() {
     // clear all callbacks to avoid cyclic refs
@@ -176,5 +180,6 @@ abstract class MapboxGlPlatform {
     onCameraTrackingDismissedPlatform.clear();
     onMapIdlePlatform.clear();
     onUserLocationUpdatedPlatform.clear();
+    resizeMapPlatform.clear();
   }
 }

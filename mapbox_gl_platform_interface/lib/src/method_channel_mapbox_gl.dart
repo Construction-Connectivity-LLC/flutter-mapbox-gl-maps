@@ -123,6 +123,9 @@ class MethodChannelMapboxGl extends MapboxGlPlatform {
             timestamp: DateTime.fromMillisecondsSinceEpoch(
                 userLocation['timestamp'])));
         break;
+      case 'map#resizeMap':
+        resizeMapPlatform(null);
+        break;
       default:
         throw MissingPluginException();
     }
@@ -677,5 +680,9 @@ class MethodChannelMapboxGl extends MapboxGlPlatform {
       'sourceId': sourceId,
       'geojsonFeature': jsonEncode(geojsonFeature)
     });
+  }
+
+  Future<void> resizeMap() async {
+    await _channel.invokeMethod('map#resizeMap');
   }
 }
