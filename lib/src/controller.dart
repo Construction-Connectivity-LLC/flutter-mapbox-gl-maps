@@ -169,6 +169,11 @@ class MapboxMapController extends ChangeNotifier {
         onMapIdle!();
       }
     });
+
+    _mapboxGlPlatform.resizeMapPlatform.add((_) {
+      resizeMap();
+    });
+
     _mapboxGlPlatform.onUserLocationUpdatedPlatform.add((location) {
       onUserLocationUpdated?.call(location);
     });
@@ -1223,6 +1228,10 @@ class MapboxMapController extends ChangeNotifier {
     } else {
       throw UnimplementedError("Unknown layer type $properties");
     }
+  }
+
+  void resizeMap() {
+    return _mapboxGlPlatform.resizeMap();
   }
 
   @override

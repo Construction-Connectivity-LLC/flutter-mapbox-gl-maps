@@ -211,6 +211,11 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   }
 
   @override
+  void resizeMap() {
+    _map.resize();
+  }
+
+  @override
   Future<void> setTelemetryEnabled(bool enabled) async {
     print('Telemetry not available in web');
     return;
@@ -908,6 +913,10 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
       String imageSourceId, Uint8List bytes, LatLngQuad coordinates) {
     // TODO: implement addImageSource
     throw UnimplementedError();
+  }
+
+  void resize() {
+    _map.resize();
   }
 
   @override
