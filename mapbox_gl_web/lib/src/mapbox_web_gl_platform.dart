@@ -15,6 +15,7 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   LatLng? _dragPrevious;
   bool _dragEnabled = true;
   final _addedFeaturesByLayer = <String, FeatureCollection>{};
+  final _featureZoomCallbacks = <String, ValueChanged<CameraUpdate>>{};
 
   final _interactiveFeatureLayerIds = Set<String>();
 
@@ -179,7 +180,14 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   @override
   Future<bool?> animateCamera(CameraUpdate cameraUpdate) async {
     final cameraOptions = Convert.toCameraOptions(cameraUpdate, _map);
-    _map.flyTo(cameraOptions);
+    _map.flyTo({
+      'center': cameraOptions.center,
+      'zoom': cameraOptions.zoom,
+      'bearing': cameraOptions.bearing,
+      'pitch': cameraOptions.pitch,
+      'around': cameraOptions.around,
+      'speed': 5,
+    });
     return true;
   }
 
@@ -364,11 +372,32 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   void _onMapClick(Event e) {
     final features = _map.queryRenderedFeatures([e.point.x, e.point.y],
         {"layers": _interactiveFeatureLayerIds.toList()});
+    final latLng = LatLng(e.lngLat.lat.toDouble(), e.lngLat.lng.toDouble());
     final payload = {
       'point': Point<double>(e.point.x.toDouble(), e.point.y.toDouble()),
-      'latLng': LatLng(e.lngLat.lat.toDouble(), e.lngLat.lng.toDouble()),
+      'latLng': latLng,
       if (features.isNotEmpty) "id": features.first.id,
     };
+    if (features.isNotEmpty) {
+      Set<Feature> set = features.toSet();
+      for (var feature in set) {
+        if (feature.properties['cluster'] == true) {
+          final clusterId = feature.properties['cluster_id'];
+          for (final featureZoomCallback in _featureZoomCallbacks.entries) {
+            _map.getSource(featureZoomCallback.key)
+                .jsObject
+                .getClusterExpansionZoom(clusterId, allowInterop((err, zoom) {
+              if (err == null) {
+                final coordinates = feature.geometry.coordinates;
+                featureZoomCallback.value(
+                    CameraUpdate.newLatLngZoom(LatLng(coordinates[1], coordinates[0]), zoom)
+                );
+              }
+            }));
+          }
+        }
+      }
+    }
     if (features.isNotEmpty) {
       onFeatureTappedPlatform(payload);
     } else {
@@ -957,5 +986,12 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
         source.setData(newData);
       }
     }
+  }
+
+  @override
+  Future<void> addFeatureZoomCallback(
+      String sourceId, ValueChanged<CameraUpdate> callback) {
+    _featureZoomCallbacks[sourceId] = callback;
+    return Future.value();
   }
 }

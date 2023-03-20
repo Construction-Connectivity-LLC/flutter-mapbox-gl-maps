@@ -685,4 +685,10 @@ class MethodChannelMapboxGl extends MapboxGlPlatform {
   Future<void> resizeMap() async {
     await _channel.invokeMethod('map#resizeMap');
   }
+
+  @override
+  Future<void> addFeatureZoomCallback(String sourceId, ValueChanged<CameraUpdate> callback) {
+    //todo: implement getZoomExpansionLevel
+    return Future.value(0.0);
+  }
 }
