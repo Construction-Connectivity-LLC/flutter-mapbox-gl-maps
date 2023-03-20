@@ -20,12 +20,14 @@ dependencies:
   mapbox_gl_platform_interface:
     path: ../mapbox_gl_platform_interface
   mapbox_gl_dart:
-    path: ../mapbox-gl-dart
+    git: https://github.com/Construction-Connectivity-LLC/mapbox_gl_dart.git
   image: ^3.0.0
 
 dependency_overrides:
   mapbox_gl_platform_interface:
     path: ../mapbox_gl_platform_interface
+  mapbox_gl_dart:
+    git: https://github.com/Construction-Connectivity-LLC/mapbox_gl_dart.git
 
 dev_dependencies:
   flutter_test:

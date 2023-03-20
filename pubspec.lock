@@ -70,9 +70,11 @@ packages:
   mapbox_gl_dart:
     dependency: transitive
     description:
-      path: "../mapbox-gl-dart"
-      relative: true
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: "45c6e6af45f1f9d583c7bf320ecb3d1d22724c95"
+      url: "https://github.com/Construction-Connectivity-LLC/mapbox_gl_dart.git"
+    source: git
     version: "0.2.1"
   mapbox_gl_platform_interface:
     dependency: "direct main"
@@ -124,10 +126,10 @@ packages:
     dependency: transitive
     description:
       name: pointycastle
-      sha256: db7306cf0249f838d1a24af52b5a5887c5bf7f31d8bb4e827d071dc0939ad346
+      sha256: "57b6b78df14175658f09c5dfcfc51a46ad9561a3504fe679913dab404d0cc0f2"
       url: "https://pub.dev"
     source: hosted
-    version: "3.6.2"
+    version: "3.7.0"
   sky_engine:
     dependency: transitive
     description: flutter
