@@ -9,6 +9,9 @@ typedef void OnMapClickCallback(Point<double> point, LatLng coordinates);
 typedef void OnFeatureInteractionCallback(
     dynamic id, Point<double> point, LatLng coordinates);
 
+typedef void OnFeatureZoomCallback(
+    dynamic id, Point<double> point, LatLng coordinates, double zoom);
+
 typedef void OnFeatureDragnCallback(dynamic id,
     {required Point<double> point,
     required LatLng origin,
@@ -209,6 +212,8 @@ class MapboxMapController extends ChangeNotifier {
 
   /// Callbacks to receive tap events for features (geojson layer) placed on this map.
   final onFeatureTapped = <OnFeatureInteractionCallback>[];
+
+  final onFeatureZoom = <OnFeatureZoomCallback>[];
 
   final onFeatureDrag = <OnFeatureDragnCallback>[];
 
@@ -1145,6 +1150,12 @@ class MapboxMapController extends ChangeNotifier {
   /// Add a new source to the map
   Future<void> addSource(String sourceid, SourceProperties properties) async {
     return _mapboxGlPlatform.addSource(sourceid, properties);
+  }
+
+  /// Add a new source to the map
+  Future<void> addFeatureZoomCallback(
+      String sourceId, ValueChanged<CameraUpdate> callback) async {
+    return _mapboxGlPlatform.addFeatureZoomCallback(sourceId, callback);
   }
 
   /// Add a layer to the map with the given properties

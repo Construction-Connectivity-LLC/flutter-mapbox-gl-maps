@@ -101,6 +101,8 @@ abstract class MapboxGlPlatform {
   Future<void> addGeoJsonSource(String sourceId, Map<String, dynamic> geojson,
       {String? promoteId});
 
+  Future<void> addFeatureZoomCallback(String sourceId, ValueChanged<CameraUpdate> callback);
+
   Future<void> setGeoJsonSource(String sourceId, Map<String, dynamic> geojson);
 
   Future<void> setFeatureForGeoJsonSource(
