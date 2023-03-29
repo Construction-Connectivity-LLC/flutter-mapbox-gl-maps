@@ -389,6 +389,7 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
                 .getClusterExpansionZoom(clusterId, allowInterop((err, zoom) {
               if (err == null) {
                 final coordinates = feature.geometry.coordinates;
+                print('zooming to $zoom, coordinates: $coordinates');
                 featureZoomCallback.value(
                     CameraUpdate.newLatLngZoom(LatLng(coordinates[1], coordinates[0]), zoom)
                 );
