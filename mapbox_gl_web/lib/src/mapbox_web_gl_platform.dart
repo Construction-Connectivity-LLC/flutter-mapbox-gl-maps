@@ -180,13 +180,18 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   @override
   Future<bool?> animateCamera(CameraUpdate cameraUpdate) async {
     final cameraOptions = Convert.toCameraOptions(cameraUpdate, _map);
+    print('center: ${cameraOptions.center}');
+    print('zoom: ${cameraOptions.zoom}');
+    print('bearing: ${cameraOptions.bearing}');
+    print('pitch: ${cameraOptions.pitch}');
+    print('around: ${cameraOptions.around}');
     _map.flyTo({
       'center': cameraOptions.center,
       'zoom': cameraOptions.zoom,
       'bearing': cameraOptions.bearing,
       'pitch': cameraOptions.pitch,
-      'around': cameraOptions.around,
-      'speed': 5,
+      //'around': cameraOptions.around,
+      'speed': 3.0,
     });
     return true;
   }
