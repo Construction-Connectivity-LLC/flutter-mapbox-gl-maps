@@ -184,14 +184,7 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
     print('zoom: ${cameraOptions.zoom}');
     print('bearing: ${cameraOptions.bearing}');
     print('pitch: ${cameraOptions.pitch}');
-    _map.flyTo({
-      'center': cameraOptions.center,
-      'zoom': cameraOptions.zoom,
-      'bearing': cameraOptions.bearing,
-      'pitch': cameraOptions.pitch,
-      //'around': cameraOptions.around,
-      'speed': 3.0,
-    });
+    _map.flyTo(cameraOptions);
     return true;
   }
 
