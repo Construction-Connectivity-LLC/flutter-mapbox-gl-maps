@@ -724,6 +724,14 @@ final class MapboxMapController
           result.success(reply);
           break;
         }
+      case "map#resizeMap":
+        {
+          if (mapboxMap != null) {
+            mapboxMap.triggerRepaint();
+          }
+          result.success(null);
+          break;
+        }
       case "camera#move":
         {
           final CameraUpdate cameraUpdate =
