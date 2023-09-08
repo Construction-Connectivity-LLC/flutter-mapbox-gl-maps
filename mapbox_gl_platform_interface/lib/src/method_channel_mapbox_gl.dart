@@ -4,6 +4,8 @@ class MethodChannelMapboxGl extends MapboxGlPlatform {
   late MethodChannel _channel;
   static bool useHybridComposition = false;
 
+  final _featureZoomCallbacks = <String, ValueChanged<CameraUpdate>>{};
+
   Future<dynamic> _handleMethodCall(MethodCall call) async {
     switch (call.method) {
       case 'infoWindow#onTap':
@@ -12,7 +14,16 @@ class MethodChannelMapboxGl extends MapboxGlPlatform {
           onInfoWindowTappedPlatform(symbolId);
         }
         break;
-
+      case 'feature#onZoom':
+        final id = call.arguments['id'];
+        final double lng = call.arguments['lng'];
+        final double lat = call.arguments['lat'];
+        final int zoom = call.arguments['zoom'];
+        for (final callback in _featureZoomCallbacks.values) {
+          callback(CameraUpdate.newCameraPosition(
+              CameraPosition(target: LatLng(lat, lng), zoom: zoom.toDouble())));
+        }
+        break;
       case 'feature#onTap':
         final id = call.arguments['id'];
         final double x = call.arguments['x'];
@@ -688,7 +699,7 @@ class MethodChannelMapboxGl extends MapboxGlPlatform {
 
   @override
   Future<void> addFeatureZoomCallback(String sourceId, ValueChanged<CameraUpdate> callback) {
-    //todo: implement getZoomExpansionLevel
-    return Future.value(0.0);
+    _featureZoomCallbacks[sourceId] = callback;
+    return Future.value();
   }
 }
