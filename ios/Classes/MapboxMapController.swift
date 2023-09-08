@@ -256,6 +256,8 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
             let telemetryEnabled = arguments["enabled"] as? Bool
             UserDefaults.standard.set(telemetryEnabled, forKey: "MGLMapboxMetricsEnabled")
             result(nil)
+        case "map#resizeMap":
+            result(nil)
         case "map#getTelemetryEnabled":
             let telemetryEnabled = UserDefaults.standard.bool(forKey: "MGLMapboxMetricsEnabled")
             result(telemetryEnabled)
