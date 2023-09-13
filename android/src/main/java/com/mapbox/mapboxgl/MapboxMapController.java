@@ -1241,8 +1241,9 @@ final class MapboxMapController
                 arguments.put("lng", coordinates.get(0));
 
                 methodChannel.invokeMethod("feature#onZoom", arguments);
+            } else {
+                methodChannel.invokeMethod("feature#onTap", arguments);
             }
-            methodChannel.invokeMethod("feature#onTap", arguments);
         } else {
             methodChannel.invokeMethod("map#onMapClick", arguments);
         }
