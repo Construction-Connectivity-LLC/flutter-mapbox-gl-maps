@@ -769,16 +769,18 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
         let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
 
         if let feature = firstFeatureOnLayers(at: point), let id = feature.identifier {
-            if let source = mapView.style?.source(withIdentifier: "objects") as? MGLSource {
-                if let geoJsonSource = source as? MGLShapeSource {
-                    let clusterExpansionZoom = geoJsonSource.zoomLevel(forExpanding: feature as! MGLPointFeatureCluster)
-                    var arguments: [String: Any] = ["zoom": clusterExpansionZoom]
-
-                    let coordinates = feature.coordinate
-                    arguments["lat"] = coordinates.latitude
-                    arguments["lng"] = coordinates.longitude
-
-                    channel?.invokeMethod("feature#onZoom", arguments: arguments)
+            if ((feature.attributes["cluster"]) != nil) {
+                if let source = mapView.style?.source(withIdentifier: "objects") as? MGLSource {
+                    if let geoJsonSource = source as? MGLShapeSource {
+                        let clusterExpansionZoom = geoJsonSource.zoomLevel(forExpanding: feature as! MGLPointFeatureCluster)
+                        var arguments: [String: Any] = ["zoom": clusterExpansionZoom]
+                        
+                        let coordinates = feature.coordinate
+                        arguments["lat"] = coordinates.latitude
+                        arguments["lng"] = coordinates.longitude
+                        
+                        channel?.invokeMethod("feature#onZoom", arguments: arguments)
+                    }
                 }
             } else {
                 channel?.invokeMethod("feature#onTap", arguments: [

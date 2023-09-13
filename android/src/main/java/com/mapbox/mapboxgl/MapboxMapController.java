@@ -1231,7 +1231,7 @@ final class MapboxMapController
             arguments.put("id", feature.id());
             //todo make sourceId configurable
             Source source = style.getSource("objects");
-            if (source instanceof GeoJsonSource) {
+            if (source instanceof GeoJsonSource && feature.hasProperty("cluster") && feature.getBooleanProperty("cluster")) {
                 GeoJsonSource geoJsonSource = (GeoJsonSource) source;
                 int clusterExpansionZoom = geoJsonSource.getClusterExpansionZoom(feature);
                 arguments.put("zoom", clusterExpansionZoom);
