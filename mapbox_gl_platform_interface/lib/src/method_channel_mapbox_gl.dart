@@ -18,7 +18,7 @@ class MethodChannelMapboxGl extends MapboxGlPlatform {
         final id = call.arguments['id'];
         final double lng = call.arguments['lng'];
         final double lat = call.arguments['lat'];
-        final int zoom = call.arguments['zoom'];
+        final num zoom = call.arguments['zoom'];
         for (final callback in _featureZoomCallbacks.values) {
           callback(CameraUpdate.newCameraPosition(
               CameraPosition(target: LatLng(lat, lng), zoom: zoom.toDouble())));

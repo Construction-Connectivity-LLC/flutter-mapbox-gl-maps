@@ -1236,12 +1236,9 @@ final class MapboxMapController
                 int clusterExpansionZoom = geoJsonSource.getClusterExpansionZoom(feature);
                 arguments.put("zoom", clusterExpansionZoom);
 
-                Point northeast = feature.bbox().northeast();
-                Point southwest = feature.bbox().southwest();
-                double averageLatitude = (northeast.latitude() + southwest.latitude()) / 2;
-                double averageLongitude = (northeast.longitude() + southwest.longitude()) / 2;
-                arguments.put("lat", averageLatitude);
-                arguments.put("lng", averageLongitude);
+                List<Double> coordinates = ((Point) feature.geometry()).coordinates();
+                arguments.put("lat", coordinates.get(1));
+                arguments.put("lng", coordinates.get(0));
 
                 methodChannel.invokeMethod("feature#onZoom", arguments);
             }
