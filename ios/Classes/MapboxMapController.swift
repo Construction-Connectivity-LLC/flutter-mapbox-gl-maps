@@ -780,16 +780,15 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
 
                     channel?.invokeMethod("feature#onZoom", arguments: arguments)
                 }
+            } else {
+                channel?.invokeMethod("feature#onTap", arguments: [
+                    "id": id,
+                    "x": point.x,
+                    "y": point.y,
+                    "lng": coordinate.longitude,
+                    "lat": coordinate.latitude,
+                ])
             }
-
-
-            channel?.invokeMethod("feature#onTap", arguments: [
-                "id": id,
-                "x": point.x,
-                "y": point.y,
-                "lng": coordinate.longitude,
-                "lat": coordinate.latitude,
-            ])
         } else {
             channel?.invokeMethod("map#onMapClick", arguments: [
                 "x": point.x,
