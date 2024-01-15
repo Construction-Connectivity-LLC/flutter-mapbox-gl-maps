@@ -382,7 +382,7 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
           final clusterId = feature.properties['cluster_id'];
           for (final featureZoomCallback in _featureZoomCallbacks.entries) {
             final source = _map.getSource(featureZoomCallback.key);
-            print('source: $source');
+            print('source: ${source.dict}');
             source
                 .jsObject
                 .getClusterExpansionZoom(clusterId, allowInterop((err, zoom) {
