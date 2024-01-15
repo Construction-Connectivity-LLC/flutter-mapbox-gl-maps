@@ -38,6 +38,7 @@ class FullMapState extends State<FullMap> {
   MapboxMapController? controller;
   final watercolorRasterId = "watercolorRaster";
   int selectedStyleId = 0;
+  static int sourceIdInc = 0;
 
   _onMapCreated(MapboxMapController controller) {
     this.controller = controller;
@@ -58,9 +59,18 @@ class FullMapState extends State<FullMap> {
         "watercolor", "watercolor", RasterLayerProperties());
   }
 
-  static Future<void> addGeojsonCluster(MapboxMapController controller) async {
+   static Future<void> addGeojsonCluster(MapboxMapController controller) async {
+
+    if (sourceIdInc > 0) {
+      await controller.removeSource("objects$sourceIdInc");
+    }
+    sourceIdInc++;
+
+    controller.addFeatureZoomCallback('objects$sourceIdInc', (value) {
+      controller.animateCamera(value);
+    });
     await controller.addSource(
-        "earthquakes",
+        "objects$sourceIdInc",
         GeojsonSourceProperties(
             data:
                 'https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson',
@@ -70,33 +80,43 @@ class FullMapState extends State<FullMap> {
                 50 // Radius of each cluster when clustering points (defaults to 50)
             ));
     await controller.addLayer(
-        "earthquakes",
-        "earthquakes-circles",
-        CircleLayerProperties(circleColor: [
-          Expressions.step,
-          [Expressions.get, 'point_count'],
-          '#51bbd6',
-          100,
-          '#f1f075',
-          750,
-          '#f28cb1'
-        ], circleRadius: [
-          Expressions.step,
-          [Expressions.get, 'point_count'],
-          20,
-          100,
-          30,
-          750,
-          40
-        ]));
+      "objects$sourceIdInc",
+      "earthquakes-circles",
+      CircleLayerProperties(circleColor: [
+        Expressions.step,
+        [Expressions.get, 'point_count'],
+        '#51bbd6',
+        100,
+        '#f1f075',
+        750,
+        '#f28cb1'
+      ], circleRadius: [
+        Expressions.step,
+        [Expressions.get, 'point_count'],
+        20,
+        100,
+        30,
+        750,
+        40
+      ]),
+      filter: ['has', 'point_count'],
+    );
     await controller.addLayer(
-        "earthquakes",
+        "objects$sourceIdInc",
         "earthquakes-count",
         SymbolLayerProperties(
           textField: [Expressions.get, 'point_count_abbreviated'],
           textFont: ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
           textSize: 12,
         ));
+    await controller.addLayer(
+        "objects$sourceIdInc",
+        "unclustered-point",
+        CircleLayerProperties(
+            circleColor: '#11b4da',
+            circleRadius: 1,
+            circleStrokeWidth: 2,
+            circleStrokeColor: '#ffffff'));
   }
 
   static Future<void> addVector(MapboxMapController controller) async {

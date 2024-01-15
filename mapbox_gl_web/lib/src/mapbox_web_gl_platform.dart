@@ -381,7 +381,9 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
         if (feature.properties['cluster'] == true) {
           final clusterId = feature.properties['cluster_id'];
           for (final featureZoomCallback in _featureZoomCallbacks.entries) {
-            _map.getSource(featureZoomCallback.key)
+            final source = _map.getSource(featureZoomCallback.key);
+            print('source: $source');
+            source
                 .jsObject
                 .getClusterExpansionZoom(clusterId, allowInterop((err, zoom) {
               if (err == null) {
@@ -933,6 +935,12 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
 
   @override
   Future<void> addSource(String sourceId, SourceProperties source) async {
+    _map.addSource(sourceId, source.toJson());
+  }
+
+  @override
+  Future<void> updateSource(String sourceId, SourceProperties source) async {
+    _map.getSource(sourceId).jsObject.setData(source);
     _map.addSource(sourceId, source.toJson());
   }
 
