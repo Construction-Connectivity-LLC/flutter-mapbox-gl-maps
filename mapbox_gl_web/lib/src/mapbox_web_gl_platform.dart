@@ -25,6 +25,7 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
 
   String? _navigationControlPosition;
   NavigationControl? _navigationControl;
+  Timer? lastResizeObserverTimer;
 
   @override
   Widget buildView(
@@ -48,8 +49,10 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
     ui.platformViewRegistry.registerViewFactory(
         'plugins.flutter.io/mapbox_gl_$identifier', (int viewId) {
       _mapElement = DivElement()
-        ..style.width = '100%'
-        ..style.height = '100%';
+        ..style.position = 'absolute'
+        ..style.top = '0'
+        ..style.bottom = '0'
+        ..style.width = '100%';
       callback(viewId);
       return _mapElement;
     });
@@ -60,7 +63,6 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
     await _addStylesheetToShadowRoot(_mapElement);
     if (_creationParams.containsKey('initialCameraPosition')) {
       var camera = _creationParams['initialCameraPosition'];
-
       _dragEnabled = _creationParams['dragEnabled'] ?? true;
 
       if (_creationParams.containsKey('accessToken')) {
@@ -74,6 +76,7 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
           zoom: camera['zoom'],
           bearing: camera['bearing'],
           pitch: camera['tilt'],
+          preserveDrawingBuffer: true,
         ),
       );
       _map.on('load', _onStyleLoaded);
@@ -83,14 +86,29 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
       _map.on('movestart', _onCameraMoveStarted);
       _map.on('move', _onCameraMove);
       _map.on('moveend', _onCameraIdle);
-      _map.on('resize', _onMapResize);
+      _map.on('resize', (_) => _onMapResize());
       _map.on('styleimagemissing', _loadFromAssets);
       if (_dragEnabled) {
         _map.on('mouseup', _onMouseUp);
         _map.on('mousemove', _onMouseMove);
       }
+
+      _initResizeObserver();
     }
     Convert.interpretMapboxMapOptions(_creationParams['options'], this);
+  }
+
+  void _initResizeObserver() {
+    final resizeObserver = ResizeObserver((entries, observer) {
+      // The resize observer might be called a lot of times when the user resizes the browser window with the mouse for example.
+      // Due to the fact that the resize call is quite expensive it should not be called for every triggered event but only the last one, like "onMoveEnd".
+      // But because there is no event type for the end, there is only the option to spawn timers and cancel the previous ones if they get overwritten by a new event.
+      lastResizeObserverTimer?.cancel();
+      lastResizeObserverTimer = Timer(Duration(milliseconds: 50), () {
+        _onMapResize();
+      });
+    });
+    resizeObserver.observe(document.body as Element);
   }
 
   void _loadFromAssets(Event event) async {
@@ -178,13 +196,25 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   }
 
   @override
-  Future<bool?> animateCamera(CameraUpdate cameraUpdate) async {
+  Future<bool?> animateCamera(CameraUpdate cameraUpdate,
+      {Duration? duration}) async {
     final cameraOptions = Convert.toCameraOptions(cameraUpdate, _map);
-    print('center: ${cameraOptions.center}');
-    print('zoom: ${cameraOptions.zoom}');
-    print('bearing: ${cameraOptions.bearing}');
-    print('pitch: ${cameraOptions.pitch}');
-    _map.flyTo(cameraOptions);
+
+    final around = getProperty(cameraOptions, 'around');
+    final bearing = getProperty(cameraOptions, 'bearing');
+    final center = getProperty(cameraOptions, 'center');
+    final pitch = getProperty(cameraOptions, 'pitch');
+    final zoom = getProperty(cameraOptions, 'zoom');
+
+    _map.flyTo({
+      if (around.jsObject != null) 'around': around,
+      if (bearing != null) 'bearing': bearing,
+      if (center.jsObject != null) 'center': center,
+      if (pitch != null) 'pitch': pitch,
+      if (zoom != null) 'zoom': zoom,
+      if (duration != null) 'duration': duration.inMilliseconds,
+    });
+
     return true;
   }
 
@@ -350,12 +380,12 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
 
   void _onStyleLoaded(_) {
     _mapReady = true;
-    _map.resize();
+    _onMapResize();
     onMapStyleLoadedPlatform(null);
   }
 
-  void _onMapResize(Event e) {
-    Timer(Duration(microseconds: 10), () {
+  void _onMapResize() {
+    Timer(Duration(), () {
       var container = _map.getContainer();
       var canvas = _map.getCanvas();
       var widthMismatch = canvas.clientWidth != container.clientWidth;
@@ -641,7 +671,13 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
     }
     _interactiveFeatureLayerIds.clear();
 
-    _map.setStyle(styleString);
+    try {
+      final styleJson = jsonDecode(styleString ?? '');
+      final styleJsObject = jsUtil.jsify(styleJson);
+      _map.setStyle(styleJsObject);
+    } catch (_) {
+      _map.setStyle(styleString);
+    }
     // catch style loaded for later style changes
     if (_mapReady) {
       _map.once("styledata", _onStyleLoaded);
@@ -686,13 +722,24 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
 
   @override
   Future<void> removeLayer(String layerId) async {
-    _interactiveFeatureLayerIds.remove(layerId);
-    _map.removeLayer(layerId);
+    if (_map.getLayer(layerId) != null) {
+      _interactiveFeatureLayerIds.remove(layerId);
+      _map.removeLayer(layerId);
+    }
   }
 
   @override
   Future<void> setFilter(String layerId, dynamic filter) async {
     _map.setFilter(layerId, filter);
+  }
+
+  @override
+  Future<void> setVisibility(String layerId, bool isVisible) async {
+    final layer = _map.getLayer(layerId);
+    if (layer != null) {
+      _map.setLayoutProperty(
+          layerId, 'visibility', isVisible ? 'visible' : 'none');
+    }
   }
 
   @override
@@ -767,6 +814,24 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   }
 
   @override
+  Future<void> addFillExtrusionLayer(
+      String sourceId, String layerId, Map<String, dynamic> properties,
+      {String? belowLayerId,
+      String? sourceLayer,
+      double? minzoom,
+      double? maxzoom,
+      dynamic filter,
+      required bool enableInteraction}) async {
+    return _addLayer(sourceId, layerId, properties, "fill-extrusion",
+        belowLayerId: belowLayerId,
+        sourceLayer: sourceLayer,
+        minzoom: minzoom,
+        maxzoom: maxzoom,
+        filter: filter,
+        enableInteraction: enableInteraction);
+  }
+
+  @override
   Future<void> addLineLayer(
       String sourceId, String layerId, Map<String, dynamic> properties,
       {String? belowLayerId,
@@ -818,6 +883,21 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   }
 
   @override
+  Future<void> addHeatmapLayer(
+      String sourceId, String layerId, Map<String, dynamic> properties,
+      {String? belowLayerId,
+      String? sourceLayer,
+      double? minzoom,
+      double? maxzoom}) async {
+    return _addLayer(sourceId, layerId, properties, "heatmap",
+        belowLayerId: belowLayerId,
+        sourceLayer: sourceLayer,
+        minzoom: minzoom,
+        maxzoom: maxzoom,
+        enableInteraction: false);
+  }
+
+  @override
   Future<void> addRasterLayer(
       String sourceId, String layerId, Map<String, dynamic> properties,
       {String? belowLayerId,
@@ -844,6 +924,8 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
         properties.entries.where((entry) => isLayoutProperty(entry.key)));
     final paint = Map.fromEntries(
         properties.entries.where((entry) => !isLayoutProperty(entry.key)));
+
+    removeLayer(layerId);
 
     _map.addLayer({
       'id': layerId,
@@ -950,6 +1032,12 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
     throw UnimplementedError();
   }
 
+  Future<void> updateImageSource(
+      String imageSourceId, Uint8List? bytes, LatLngQuad? coordinates) {
+    // TODO: implement addImageSource
+    throw UnimplementedError();
+  }
+
   void resize() {
     _map.resize();
   }
@@ -992,6 +1080,34 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
         source.setData(newData);
       }
     }
+  }
+
+  @override
+  Future<String> takeSnapshot(SnapshotOptions snapshotOptions) async {
+    if (snapshotOptions.styleUri != null || snapshotOptions.styleJson != null) {
+      throw UnsupportedError("style option is not supported");
+    }
+    if (snapshotOptions.bounds != null) {
+      throw UnsupportedError("bounds option is not supported");
+    }
+    if (snapshotOptions.centerCoordinate != null ||
+        snapshotOptions.zoomLevel != null ||
+        snapshotOptions.pitch != 0 ||
+        snapshotOptions.heading != 0) {
+      throw UnsupportedError("camera posision option is not supported");
+    }
+    final base64String = await _map.getCanvas().toDataUrl('image/jpeg');
+    return base64String;
+  }
+
+  @override
+  void resizeWebMap() {
+    _onMapResize();
+  }
+
+  @override
+  void forceResizeWebMap() {
+    _map.resize();
   }
 
   @override

@@ -53,12 +53,15 @@ abstract class MapboxGlPlatform {
       OnPlatformViewCreatedCallback onPlatformViewCreated,
       Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers);
   Future<CameraPosition?> updateMapOptions(Map<String, dynamic> optionsUpdate);
-  Future<bool?> animateCamera(CameraUpdate cameraUpdate);
+  Future<bool?> animateCamera(CameraUpdate cameraUpdate, {Duration? duration});
   Future<bool?> moveCamera(CameraUpdate cameraUpdate);
   Future<void> updateMyLocationTrackingMode(
       MyLocationTrackingMode myLocationTrackingMode);
 
   Future<void> matchMapLanguageWithDeviceDefault();
+
+  void resizeWebMap();
+  void forceResizeWebMap();
 
   Future<void> updateContentInsets(EdgeInsets insets, bool animated);
   Future<void> setMapLanguage(String language);
@@ -80,6 +83,9 @@ abstract class MapboxGlPlatform {
   Future<void> addImageSource(
       String imageSourceId, Uint8List bytes, LatLngQuad coordinates);
 
+  Future<void> updateImageSource(
+      String imageSourceId, Uint8List? bytes, LatLngQuad? coordinates);
+
   Future<void> addLayer(String imageLayerId, String imageSourceId,
       double? minzoom, double? maxzoom);
 
@@ -89,6 +95,8 @@ abstract class MapboxGlPlatform {
   Future<void> removeLayer(String imageLayerId);
 
   Future<void> setFilter(String layerId, dynamic filter);
+
+  Future<void> setVisibility(String layerId, bool isVisible);
 
   Future<Point> toScreenLocation(LatLng latLng);
 
@@ -146,6 +154,15 @@ abstract class MapboxGlPlatform {
       dynamic filter,
       required bool enableInteraction});
 
+  Future<void> addFillExtrusionLayer(
+      String sourceId, String layerId, Map<String, dynamic> properties,
+      {String? belowLayerId,
+      String? sourceLayer,
+      double? minzoom,
+      double? maxzoom,
+      dynamic filter,
+      required bool enableInteraction});
+
   Future<void> addRasterLayer(
       String sourceId, String layerId, Map<String, dynamic> properties,
       {String? belowLayerId,
@@ -160,9 +177,18 @@ abstract class MapboxGlPlatform {
       double? minzoom,
       double? maxzoom});
 
+  Future<void> addHeatmapLayer(
+      String sourceId, String layerId, Map<String, dynamic> properties,
+      {String? belowLayerId,
+      String? sourceLayer,
+      double? minzoom,
+      double? maxzoom});
+
   Future<void> addSource(String sourceId, SourceProperties properties);
 
   void resizeMap();
+
+  Future<String> takeSnapshot(SnapshotOptions snapshotOptions);
 
   @mustCallSuper
   void dispose() {
