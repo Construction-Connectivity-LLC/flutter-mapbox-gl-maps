@@ -126,7 +126,7 @@ final class MapboxMapController
     private final Set<String> interactiveFeatureLayerIds;
   private final Map<String, FeatureCollection> addedFeaturesByLayer;
   private final Map<String, MapSnapshotter> mSnapshotterMap;
-  privateMapView mapView;
+  private MapView mapView;
     private MapboxMap mapboxMap;
     private boolean trackCameraPosition = false;
     private boolean myLocationEnabled = false;
