@@ -39,6 +39,8 @@ android {
     compileSdkVersion 31
     ndkVersion "20.1.5948944"
 
+
+    namespace 'com.floorcloud.mapbox'
     defaultConfig {
         minSdkVersion 20
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
