@@ -9,12 +9,12 @@ dependencies:
   mapbox_gl_platform_interface:
     git:
       url: https://github.com/Construction-Connectivity-LLC/flutter-mapbox-gl-maps.git
-      ref: flutter-3-32-update
+      ref: FLOOR-3560-Sentry]-MapboxWebGlPlatform.animateCamera
       path: mapbox_gl_platform_interface
   mapbox_gl_web:
     git:
       url: https://github.com/Construction-Connectivity-LLC/flutter-mapbox-gl-maps.git
-      ref: flutter-3-32-update
+      ref: FLOOR-3560-Sentry]-MapboxWebGlPlatform.animateCamera
       path: mapbox_gl_web
   collection: ^1.15.0
 
