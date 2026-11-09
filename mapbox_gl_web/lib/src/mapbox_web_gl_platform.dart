@@ -26,6 +26,8 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   String? _navigationControlPosition;
   NavigationControl? _navigationControl;
   Timer? lastResizeObserverTimer;
+  ResizeObserver? _resizeObserver;
+  bool _disposed = false;
 
   @override
   Widget buildView(
@@ -40,6 +42,13 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
 
   @override
   void dispose() {
+    // The observer watches document.body, so it outlives the map element and
+    // would keep resizing a removed map whose canvas is gone.
+    _disposed = true;
+    _resizeObserver?.disconnect();
+    _resizeObserver = null;
+    lastResizeObserverTimer?.cancel();
+    lastResizeObserverTimer = null;
     super.dispose();
     _map.remove();
   }
@@ -99,6 +108,7 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   }
 
   void _initResizeObserver() {
+    _resizeObserver?.disconnect();
     final resizeObserver = ResizeObserver((entries, observer) {
       // The resize observer might be called a lot of times when the user resizes the browser window with the mouse for example.
       // Due to the fact that the resize call is quite expensive it should not be called for every triggered event but only the last one, like "onMoveEnd".
@@ -109,12 +119,19 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
       });
     });
     resizeObserver.observe(document.body as Element);
+    _resizeObserver = resizeObserver;
   }
 
   void _loadFromAssets(Event event) async {
     final imagePath = event.id;
-    final ByteData bytes = await rootBundle.load(imagePath);
-    await addImage(imagePath, bytes.buffer.asUint8List());
+    try {
+      final ByteData bytes = await rootBundle.load(imagePath);
+      if (_disposed) return;
+      await addImage(imagePath, bytes.buffer.asUint8List());
+    } catch (_) {
+      // A style image with no matching asset is optional: mapbox renders the
+      // layer without it, so a failed lookup must not surface as an error.
+    }
   }
 
   _onMouseDown(Event e) {
@@ -345,7 +362,10 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   @override
   Future<void> addImage(String name, Uint8List bytes,
       [bool sdf = false]) async {
-    final photo = decodeImage(bytes)!;
+    // Bytes that are not an image (e.g. an HTML fallback page served for a
+    // missing asset) decode to null.
+    final photo = decodeImage(bytes);
+    if (photo == null || _disposed) return;
     if (!_map.hasImage(name)) {
       _map.addImage(
         name,
@@ -384,7 +404,9 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
   }
 
   void _onMapResize() {
+    if (_disposed) return;
     Timer(Duration(), () {
+      if (_disposed) return;
       var container = _map.getContainer();
       var canvas = _map.getCanvas();
       var widthMismatch = canvas.clientWidth != container.clientWidth;
