@@ -124,14 +124,16 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
 
   void _loadFromAssets(Event event) async {
     final imagePath = event.id;
+    final ByteData bytes;
     try {
-      final ByteData bytes = await rootBundle.load(imagePath);
-      if (_disposed) return;
-      await addImage(imagePath, bytes.buffer.asUint8List());
+      bytes = await rootBundle.load(imagePath);
     } catch (_) {
       // A style image with no matching asset is optional: mapbox renders the
       // layer without it, so a failed lookup must not surface as an error.
+      return;
     }
+    if (_disposed) return;
+    await addImage(imagePath, bytes.buffer.asUint8List());
   }
 
   _onMouseDown(Event e) {
@@ -365,7 +367,11 @@ class MapboxWebGlPlatform extends MapboxGlPlatform
     // Bytes that are not an image (e.g. an HTML fallback page served for a
     // missing asset) decode to null.
     final photo = decodeImage(bytes);
-    if (photo == null || _disposed) return;
+    if (photo == null) {
+      print('mapbox_gl_web: skipped image "$name", bytes are not an image');
+      return;
+    }
+    if (_disposed) return;
     if (!_map.hasImage(name)) {
       _map.addImage(
         name,
